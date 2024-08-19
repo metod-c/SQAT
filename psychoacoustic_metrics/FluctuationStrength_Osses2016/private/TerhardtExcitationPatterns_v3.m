@@ -32,11 +32,11 @@ whichL = find(LdB > params.MinExcdB);
 nL     = length(whichL);
 
 % Steepness of slopes
-S1 = -27;			
+S1 = -27;
 S2 = zeros(1,nL);
 for w = 1:nL
     idx = whichL(w);
-    steep = -24 - ( 230 / freqs(idx)) + (0.2 * LdB(idx) ); 
+    steep = -24 - ( 230 / freqs(idx)) + (0.2 * LdB(idx) );
     if steep < 0
         S2(w) = steep;
     end
@@ -53,7 +53,7 @@ Slopes_dB = nan(nL,params.Chno);
 for l = 1:nL
     Li = LdB(whichL(l));
     zi = params.Barkno(whichL(l)+N01);
-    
+
     for k = 1:whichZ(1,l)
         zk = k * 0.5;
         delta_z = zi - zk;
@@ -72,7 +72,7 @@ for l = 1:nL
             Slopes(l,k) = 10^(Stemp/20);
             Slopes_dB(l,k) = Stemp;
         end
-    end 
+    end
 end
 
 % Excitation patterns:
@@ -169,12 +169,12 @@ HTres = [
 
 MinExcdB            = zeros(1,length(qb));
 MinExcdB(qb-N01)    = interp1(HTres(:,1),HTres(:,2),Barkno(qb));
-   
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function MinBf = il_calculate_MinBf(N01,df,Bark,MinExcdB)
-    
+
 Cf = round(Bark(2:25,2)'/df)-N01+1;
-Bf = round(Bark(1:25,3)'/df)-N01+1;  
+Bf = round(Bark(1:25,3)'/df)-N01+1;
 
 zb      = sort([Bf Cf]);
 MinBf   = MinExcdB(zb);

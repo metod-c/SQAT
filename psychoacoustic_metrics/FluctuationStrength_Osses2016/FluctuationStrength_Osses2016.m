@@ -1,9 +1,9 @@
 function OUT = FluctuationStrength_Osses2016(insig,fs,method,time_skip,show)
 % function OUT = FluctuationStrength_Osses2016(insig,fs,method,time_skip,show)
 %
-%  This function calculates the fluctuation strength using the model 
-%    developed by: [1] Osses, A., Garcia A., and Kohlrausch, A.. 
-%    "Modelling the sensation of fluctuation strength." Proceedings of 
+%  This function calculates the fluctuation strength using the model
+%    developed by: [1] Osses, A., Garcia A., and Kohlrausch, A..
+%    "Modelling the sensation of fluctuation strength." Proceedings of
 %    Meetings on Acoustics 22 ICA. Vol. 28, 050005. doi:10.1121/2.0000410
 %
 %  Reference signal: 60 dBSPL 1 kHz tone 100% modulated at 4 Hz should yield 1 vacil.
@@ -17,7 +17,7 @@ function OUT = FluctuationStrength_Osses2016(insig,fs,method,time_skip,show)
 %   fs : sampling frequency (Hz) - Defaults of 48 kHz or 44.1 kHz (pre-computed
 %                                    filters.
 %   method : integer
-%   method=0, stationary analysis - window size=length(insig) (s) kind of 
+%   method=0, stationary analysis - window size=length(insig) (s) kind of
 %             an rms value
 %   method=1, time_varying analysis - window size=2 (s)
 %             NOTE: if the signal's length is smaller than 2s, the analysis
@@ -33,13 +33,13 @@ function OUT = FluctuationStrength_Osses2016(insig,fs,method,time_skip,show)
 % OUTPUT:
 %   OUT : struct containing the following fields
 %
-%       * InstantaneousFluctuationStrength: instantaneous fluctuation 
+%       * InstantaneousFluctuationStrength: instantaneous fluctuation
 %           strength (vacil) vs time
-%       * InstantaneousSpecificFluctuationStrength: specific fluctuation 
+%       * InstantaneousSpecificFluctuationStrength: specific fluctuation
 %           strength (vacil/Bark) vs time and Bark scale
-%       * TimeAveragedSpecificFluctuationStrength: time-averaged specific 
+%       * TimeAveragedSpecificFluctuationStrength: time-averaged specific
 %           fluctuation strength (vacil/Bark) vs Bark scale
-%       * barkAxis : vector of Bark band numbers used for specific 
+%       * barkAxis : vector of Bark band numbers used for specific
 %           fluctuation strength computation
 %       * time : time vector in seconds
 %       * Several statistics based on the InstantaneousFS
@@ -51,20 +51,20 @@ function OUT = FluctuationStrength_Osses2016(insig,fs,method,time_skip,show)
 %         ** FSx : percentile fluctuation strength exceeded during x percent
 %              of the signal (vacil)
 %
-% Original file name: FluctuationStrength_TUe.m from 
+% Original file name: FluctuationStrength_TUe.m from
 %   https://github.com/aosses-tue/mb/tree/master/FluctuationStrength_TUe (accessed 04/03/2020)
 %
 % Author: Alejandro Osses, HTI, TU/e, the Netherlands, 2014-2016
 % Author: Rodrigo Garcia, HTI, TU/e, the Netherlands, 2014-2016
 % Author: Gil Felix Greco, Braunschweig 04.03.2020 - Modifications
-%     1) includes resampling to 44100 Hz, which is preferible because it 
-%        takes less time to compute than 48 kHz because of the filtering 
+%     1) includes resampling to 44100 Hz, which is preferible because it
+%        takes less time to compute than 48 kHz because of the filtering
 %        process of IIR filters for modeling the Hweigth parameter
-%     2) include possibility to choose method (stationary or time-varying) 
+%     2) include possibility to choose method (stationary or time-varying)
 %        which affects the window size
-% Author: Alejandro Osses, 10/05/2023. Appropriate scaling for the specific 
+% Author: Alejandro Osses, 10/05/2023. Appropriate scaling for the specific
 %            fluctuation strength.
-% Author: Alejandro Osses, 11/05/2023. Moving TerhardtExcitationPatterns_v3, 
+% Author: Alejandro Osses, 11/05/2023. Moving TerhardtExcitationPatterns_v3,
 %            Get_Bark to the private folder (old il_* functions)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if nargin == 0
@@ -94,11 +94,11 @@ end
 
 %% Checking which method
 if method==1 % 'time_varying'
-    
+
     % This is the default from the original authors.
     time_resolution = 2;  % window length fixed in 2s (Osses et al., 2016)
     N=round(fs*time_resolution);
-    
+
     if N>=length(insig) % if the signal's length is smaller than the window size, force method==0
         warning('The signal is shorter than 2 seconds. The analysis will be automatically changed to ''stationary'', i.e. method=0 and window size=length(insig). This analysis window may lead to inaccurate fluctuation-strength estimates, especially if the modulation components are low (below 10 Hz).');
         method=0;
@@ -110,7 +110,7 @@ if method==0 %'stationary'
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
+
 model_par = il_Get_fluctuation_strength_params(N,fs);
 model_par.debug = 'none';
 
@@ -133,10 +133,10 @@ attackrelease = 50;
 window = il_Do_cos_ramp(window,fs,attackrelease,attackrelease);
 
 for iFrame = 1:nFrames
-    
+
     signal = insig(:,iFrame);
     t(iFrame,1) = t_b(1,iFrame);
-    
+
     % Apply window to frame
     signal = transpose(window .* signal);
 
@@ -146,12 +146,12 @@ for iFrame = 1:nFrames
     %
     % 4096th order FIR filter:
     signal = il_PeripheralHearingSystem_t(signal,fs); % since 14/05
-    
+
     % 2.2 Excitation patterns
     %     (see model_par.filterbank == 'terhardt', in _debug version):
-    
+
     dBFS = 94; % corresponds to 1 Pa (new default in SQAT)
-    % dBFS = 100; % unit amplitude corresponds to 100 dB (AMT Toolbox 
+    % dBFS = 100; % unit amplitude corresponds to 100 dB (AMT Toolbox
                   % convention, default by the original authors)
     ei   = TerhardtExcitationPatterns_v3(signal,fs,dBFS);
     dz   = 0.5; % Barks, frequency step
@@ -160,13 +160,13 @@ for iFrame = 1:nFrames
     flow = bark2hz(z-.5); flow(1) = 0.01;
     fup  = bark2hz(z+.5);
     BWHz = fup - flow;
-        
+
     %% 3. Modulation depth (estimation)
     [mdept,hBPi] = il_modulation_depths(ei,model_par.Hweight);
-    
+
     %% 4. Cross-correlation coefficient:
     %     (see model_par.dataset == 0, in _debug version)
-                    
+
     % % here cross-correlation is computed before band-pass filtering:
     % Ki = il_cross_correlation(inoutsig); % with hBPi Ki goes down but not as much as 'it should'
     Ki = il_cross_correlation(hBPi);
@@ -177,7 +177,7 @@ for iFrame = 1:nFrames
     md_fr(iFrame,:) = mdept;
     fi(iFrame,:)  = model_par.cal * fi_;
     fluct(iFrame) = dz*sum(fi(iFrame,:)); % total fluct = integration of the specific fluct. strength pattern
-    
+
 end
 
 
@@ -220,43 +220,43 @@ OUT.FS95 = get_percentile(fluct(idx:end),95);
 %% plots
 
 if show == true && method==1
-    
+
     figure('name','Fluctuation strength analysis',...
            'units','normalized','outerposition',[0 0 1 1]); % plot fig in full screen
-       
+
     % Time-varying Fluctuation Strength
     subplot(2,2,1:2)
-    
+
     plot(t,fluct,'r-');
-    
+
     title ('Instantaneous fluctuation strength','Interpreter','Latex');
     xlabel('Time (s)','Interpreter','Latex');
     ylabel('Fluctuation strength, $\mathrm{FS}$ (vacil)','Interpreter','Latex');
-    
+
     % Time-averaged Fluctuation strength as a function of critical band
     subplot(2,2,3)
-    
+
     plot(transpose(z), mean(fi,1),'r-');
-    
+
     title('Time-averaged specific fluctuation strength','Interpreter','Latex');
     xlabel('Critical band, $z$ (Bark)','Interpreter','Latex');
     ylabel('Specific fluctuation strength, $\mathrm{FS}^{\prime}$ (vacil/Bark)','Interpreter','Latex');
-    
+
     % Specific fluctuation strength spectrogram
     subplot(2,2,4)
-    
-    [xx,yy]=meshgrid(t,z); 
-    pcolor(xx,yy,transpose(fi)); 
-    shading interp; colorbar; axis tight; 
-    
+
+    [xx,yy]=meshgrid(t,z);
+    pcolor(xx,yy,transpose(fi));
+    shading interp; colorbar; axis tight;
+
     set(gca,'YDir','normal');
     title('Instantaneous specific fluctuation strength','Interpreter','Latex');
     xlabel('Time (s)','Interpreter','Latex');
     ylabel('Critical band, $z$ (Bark)','Interpreter','Latex');
     ylabel(colorbar, 'Specific fluctuation strength, $\mathrm{FS}^{\prime}$ ($\mathrm{vacil}/\mathrm{Bark}$)','Interpreter','Latex');
-           
+
     set(gcf,'color','w')
-           
+
 end
 
 
@@ -265,7 +265,7 @@ disp('')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [mdept,hBPi,ei] = il_modulation_depths(ei,Hweight)
-    
+
 [Chno,Nc] = size(ei);
 mdept   = zeros(1,Chno);
 
@@ -280,9 +280,9 @@ else
     hBPi = sosfilt(Hweight,ei);
 end
 
-try 
+try
     % In case LTFAT toolbox is installed (overloads rms from signal processing toolbox)
-    hBPrms = rms(hBPi,'dim',1); 
+    hBPrms = rms(hBPi,'dim',1);
 catch
     % uses the default rms calculation from the signal processing toolbox
     hBPrms = rms(hBPi,1);
@@ -299,7 +299,7 @@ idx = find(h0<0);
 if length(idx) ~= 0
     error('There is an error in the algorithm')
 end
-    
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function ki = il_cross_correlation(hBPi)
@@ -346,7 +346,7 @@ if nargin <4
     dataset = 0;
 end
 
-gzi = model_par.gzi; 
+gzi = model_par.gzi;
 p_g = model_par.p_g;
 p_m = model_par.p_m;
 p_k = model_par.p_k;
@@ -398,16 +398,16 @@ params.debug   = 'none';
 
 % dataset = 0; % 0 = Approved version
 params.window_type = 'cosine';
-params.filterbank = 'terhardt'; 
-params.p_g     = 1; 
-params.p_m     = 1.7;  
-params.p_k     = 1.7; % warning('Temporal value') 
+params.filterbank = 'terhardt';
+params.p_g     = 1;
+params.p_m     = 1.7;
+params.p_k     = 1.7; % warning('Temporal value')
 params.a0_in_time = 1;
 params.a0_in_freq = ~params.a0_in_time;
 
 params.cal     = 0.4980; % this value is twice 0.2490 on 15/06/2016
 params.bIdle   = 1; % v5
-%%%        
+%%%
 
 params.Hweight = Get_Hweight_fluctuation(fs);
 params.Hweight = Get_Hweight_fluctuation(fs);
@@ -428,17 +428,17 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function outsig = il_PeripheralHearingSystem_t(insig,fs)
 % function outsig = il_PeripheralHearingSystem_t(insig,fs)
-% 
+%
 % Applies the effect of transmission from free field to the cochlea to a
 % given signal. Time domain version.
-% 
+%
 % Inputs:
 % insig: The signal to process. insig has to be a row vector.
 % fs: Sampling frequency,
-% 
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-K = 2^12; % FIR filter order 
+K = 2^12; % FIR filter order
 
 % B = il_calculate_a0(fs,K);
 B = il_calculate_a0_idle(fs,K);
@@ -559,7 +559,7 @@ B = fir2(N,f/(fs/2),a0);
 
 if nargout == 0
     [H1,Fn]=freqz(B,1,N/2);
-    
+
     figure;
     plot(fs/2*Fn/pi, 20*log10(abs([H1])));
     xlabel('Frequency [Hz]')
@@ -575,7 +575,7 @@ function gzi = il_Get_gzi_fluctuation(Chno)
 % Returns gzi parameters using the specified number of channels.
 
 Chstep = 0.5;
-    
+
 % Hz:   100 250   519   717 926 1084 1255 1465 1571   1972 2730 4189   15550
 g0 = [0,  1,  2.5,  4.9,6.5,  8,   9,  10,  11,  11.5,  13,  15,  17.5,   24;
       1,  1,  1  ,  1  ,1  ,  1,   1,   1,   1,   1  ,   1, 0.9,   0.7, 0.5];
@@ -583,7 +583,7 @@ g0 = transpose(g0);
 
 gzi = interp1(g0(:,1),g0(:,2),(1:Chno)*Chstep);
 gzi(isnan(gzi)) = g0(end,2); % 0
-   
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function gain = il_From_dB(gain_dB,div)
 % function gain = il_From_dB(gain_dB,div)
@@ -600,28 +600,28 @@ gain = 10 .^ (gain_dB / div);
 
 %**************************************************************************
 %
-% Redistribution and use in source and binary forms, with or without 
-% modification, are permitted provided that the following conditions are 
+% Redistribution and use in source and binary forms, with or without
+% modification, are permitted provided that the following conditions are
 % met:
 %
 %  * Redistributions of source code must retain the above copyright notice,
 %    this list of conditions and the following disclaimer.
-%  * Redistributions in binary form must reproduce the above copyright 
-%    notice, this list of conditions and the following disclaimer in the 
+%  * Redistributions in binary form must reproduce the above copyright
+%    notice, this list of conditions and the following disclaimer in the
 %    documentation and/or other materials provided with the distribution.
 %  * Neither the name of the <ORGANISATION> nor the names of its contributors
-%    may be used to endorse or promote products derived from this software 
+%    may be used to endorse or promote products derived from this software
 %    without specific prior written permission.
 %
-% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 % "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-% TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
+% TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
 % PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER
 % OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 % EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
 % PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
 % PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-% LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+% LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 % NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %
